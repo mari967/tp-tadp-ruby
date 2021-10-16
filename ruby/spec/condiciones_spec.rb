@@ -70,4 +70,55 @@ describe 'Condiciones' do
       expect(lista_resultado).to eq([:foo, :bar])
     end
   end
+
+  describe 'Condición nombre de parámetros' do
+    class MiClase3
+      def foo(param1, param2)
+      end
+
+      def bar(param1)
+      end
+    end
+
+    it 'Filtro para métodos con un parámetro con nombre empezado en param retorna bar' do
+      lista_resultado = Aspects.on MiClase3 do
+        where has_parameters(1, /param.*/)
+    end
+      expect(lista_resultado).to eq([:bar])
+    end
+
+    it 'Filtro para métodos con dos parámetros con nombre empezado en param retorna foo' do
+      lista_resultado = Aspects.on MiClase3 do
+        where has_parameters(2, /param.*/)
+      end
+      expect(lista_resultado).to eq([:foo])
+    end
+
+    it 'Filtro para métodos con tres parámetros con nombre empezado en param no da resultados' do
+      lista_resultado = Aspects.on MiClase3 do
+        where has_parameters(3, /param.*/)
+      end
+      expect(lista_resultado).to eq([])
+    end
+
+  end
+
+
+  describe 'Condición Negación' do
+    class MiClase4
+      def foo1(p1)
+      end
+      def foo2(p1, p2)
+      end
+      def foo3(p1, p2, p3)
+      end
+    end
+
+    it 'Filtro para métodos con nombre /foo\d/ y que no tienen un parámetro retorna foo2 y foo3' do
+      lista_resultado = Aspects.on MiClase4 do
+        where name(/foo\d/), neg(has_parameters(1))
+      end
+      expect(lista_resultado).to eq([:foo2, :foo3])
+    end
+  end
 end

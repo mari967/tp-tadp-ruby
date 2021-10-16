@@ -25,34 +25,30 @@ module Condicion #cada condicion debe retornar un proc. El proc retorna un boole
 
   def has_parameters cantidad, tipo=nil
     proc do |method_to_filter|
-      cumple = false
       origen_to_filter = if @origen.is_a? Module
                            @origen.new
                          else @origen
                          end
 
-      lista = origen_to_filter.methods
-      metodo = origen_to_filter.method(method_to_filter)
       lista_parametros = origen_to_filter.method(method_to_filter).parameters
-      if !tipo.nil?
-        obligatoriedad = case tipo
-                         when 'mandatory'
-                           :req
-                         when 'optional'
-                           :opt
-                         end
-        cumple = lista_parametros.select do |lista_parametro|
-                                          lista_parametro[0] == obligatoriedad end .size == cantidad
+      parametros_filtrados = if tipo.is_a? Regexp
+                               lista_parametros.select { |lista_param| !lista_param[1].nil? and lista_param[1].match? tipo }
+                             else
+                               obligatoriedad = case tipo
+                                                when 'mandatory'
+                                                  :req
+                                                when 'optional'
+                                                  :opt
+                                                end
+                               lista_parametros.select { |lista_param| lista_param[0] == obligatoriedad || tipo.nil? }
+                             end
 
-      else
-        cumple = lista_parametros.size == cantidad
-      end
-      cumple
+      parametros_filtrados.size == cantidad
     end
   end
 
-  def neg condicion
-
+  def neg(condicion)
+    proc { |method_to_filter| !condicion.call(method_to_filter) }
   end
 end
 
